@@ -1,44 +1,52 @@
-# Software Defect Prediction: Exploratory Data Analysis and Model Training
+# Machine Learning for Non-Defective Code Identification
 
-## 1. Project Overview
-This document outlines the Exploratory Data Analysis (EDA) and model training process for a software defect prediction dataset. The goal of the project is to classify software modules as defective or non-defective using machine learning models, specifically Random Forest and K-Nearest Neighbors (KNN).
+## 1. Project Overview & Business Case
+The purpose of the project is to develop a machine-learning model to improve software quality. Defects within the software prevent a business from operating at the most efficient level. Businesses face high costs of software defects, limited testing resources, complex code that increases risk, as well as security vulnerabilities and performance problems. 
 
-## 2. Dataset Characteristics and Cleaning
-The dataset is loaded and initially inspected to understand its structure and data quality.
-* **Dataset Shape:** The raw dataset consists of 60,000 rows and 23 columns.
-* **Data Types:** The features are primarily numerical, consisting of 19 integer (`int64`) columns and 4 float (`float64`) columns.
-* **Data Quality:** There are absolutely no missing values and zero duplicate rows in the dataset.
+By using historical data on software detection, an AI machine-learning model can predict bugs, costs, and risks more efficiently. This approach will allocate testing resources more efficiently and help reduce debugging costs. Identifying defect-prone modules early allows teams to prioritize testing efforts and improve overall software quality before deployment. 
 
-## 3. Class Imbalance and Preprocessing
-An initial distribution check of the target variable (`defect`) revealed a severe class imbalance.
-* **Distribution:** There are 58,223 instances of class `1` (defective) and only 1,777 instances of class `0` (non-defective).
-* **Balancing Strategy:** To prevent the model from becoming biased towards the majority class, the dataset was balanced via random downsampling.
-* **Balanced Dataset:** The resulting training dataframe contains 3,554 rows (an equal split of 1,777 for each class).
-* **Holdout Set:** The remaining 56,446 instances of class `1` were stored in an unused dataframe (`df_unused`) to test the model's performance on unseen majority-class data later.
+## 2. Project Scope & Deliverables
+The project utilizes the existing dataset of 60k historical software module records. 
+* **In Scope:** Exploratory Data Analysis (EDA) to understand the drivers of clean code (for example, high `test_coverage`, or low `past_defects`).
+* **In Scope:** Training and evaluating models with a focus on optimizing for the minority class.
+* **Out of Scope:** Automated patching or rewriting of the defective code.
+* **Out of Scope:** Real-time integration into the CI/CD pipeline.
 
-## 4. Exploratory Data Analysis (EDA)
+**Expected Deliverables:**
+* Data Profiling & EDA Report.
+* Baseline Model.
+* Refined Machine Learning Models (Random Forest, XGBoost, Support Vector Machines) optimized for the minority class.
 
-A correlation matrix was generated to identify which software metrics have the strongest relationship with the target variable.
-* **Positive Correlations:** The features most highly correlated with defects are `past_defects` (0.681163), `static_analysis_warnings` (0.565778), and `cyclomatic_complexity` (0.479219).
-* **Negative Correlations:** The feature `test_coverage` has a notable negative correlation (-0.342167) with defects, suggesting that higher test coverage is associated with fewer defects.
-* **Visualizations:** Scatter plots were utilized to visually confirm the relationships between `test_coverage` vs. `defect` and `past_defects` vs. `defect`.
+## 3. Risks, Constraints, and Assumptions
+* **Risks:** The extreme class imbalance (approx. 97% defective vs. 3% clean) makes it difficult for a model to learn the minority class. 
+* **Risks:** High False Positives: If the model incorrectly predicts a defective module as "clean," bugs will be pushed to production.
+* **Constraints:** The project is constrained to using only the 23 existing historical features/columns available in the current dataset.
+* **Assumptions:** The historical metrics (like `past_defects`, `test_coverage`, and `static_analysis_warnings`) remain stable predictors of code quality for future sprints.
 
-## 5. Model Training: Random Forest
+## 4. Schedule and Milestones
+The project is expected to start on 2026.03.01 and reach completion by 2026.06.30. The tentative milestone schedule is as follows:
 
-A Random Forest Classifier was trained as the primary predictive model. The balanced dataset was split into training (2,665 samples) and testing (889 samples) sets using a stratified split.
-* **Configuration:** The model was instantiated with 100 estimators (`n_estimators=100`).
-* **Test Set Performance:** The model achieved perfect metrics on the test set: 1.0 Accuracy, 1.0 Precision, 1.0 Recall, and 1.0 F1-score.
-* **Holdout Set Performance:** When evaluated against the 56,446 unused majority-class samples, the model achieved an accuracy of roughly 0.9998 and a perfect precision of 1.0.
+* **Project kickoff & scope definition:** February 23, 2026 to February 24, 2026.
+* **Data acquisition & data understanding:** February 25, 2026 to February 28, 2026.
+* **Exploratory Data Analysis (EDA):** March 1, 2026 to March 6, 2026.
+* **Feature engineering & data preprocessing:** March 7, 2026 to March 12, 2026.
+* **Model development (supplier reliability prediction):** March 13, 2026 to March 20, 2026.
+* **Model evaluation & interpretation:** March 21, 2026 to March 25, 2026.
+* **Risk scoring framework & documentation:** March 26, 2026 to March 29, 2026.
+* **Final review & presentation:** March 30, 2026 to March 31, 2026.
 
-### Feature Importance
-Both the model's native feature importance and permutation importance confirmed the findings from the EDA phase.
-* The top predictive features were `past_defects`, `static_analysis_warnings`, `cyclomatic_complexity`, and `test_coverage`.
-* Permutation importance yielded the exact same top four features in the same order.
+## 5. Team, Costs, and Benefits
+**Project Team & Resources:**
+* **Project Team:** Lead Data Scientist, Data Analyst, Project Manager.
+* **Support Resources:** QA Leads, Senior Code Reviewers, DevOps Engineer.
+* **Special Needs:** Compute resources for model training, access to historical code repository metrics.
 
-## 6. Model Training: K-Nearest Neighbors (KNN)
+**Estimated Costs ($32,900 Total):**
+* **Labour:** $30,400 for Data Scientist hours ($80/hr) and QA consultation hours ($60/hr).
+* **Development Cost:** $1,500 flat rate for specific tooling or cloud compute costs.
+* **Hardware:** $0 for local machine upgrades.
+* **Software:** $1,000 flat rate for licenses for specialized IDEs or ML cloud platforms.
 
-As a secondary approach, a KNN model was trained and evaluated.
-* **Scaling:** Because KNN relies on distance metrics, the features were first standardized using `StandardScaler`.
-* **Configuration:** The model was set to use 3 neighbors (`n_neighbors=3`).
-* **Test Set Performance:** The KNN model achieved an accuracy of approximately 0.86, a precision of 0.96, a recall of 0.75, and an F1-score of 0.84.
-* **Holdout Set Performance:** On the unused data, the KNN model reached an accuracy of roughly 0.978 and an F1-score of 0.989.
+**Expected Benefits ($135,000 Total):**
+* **Qualitative Benefits:** Faster release cycles, reduced QA bottleneck, and better allocation of QA resources.
+* **Quantitative Benefits:** QA Labor Cost Reduction totaling $135,000, based on an estimate of 2,250 QA hours saved annually at $60/hour.
