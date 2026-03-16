@@ -35,7 +35,7 @@ The project utilizes the existing dataset of 60k historical software module reco
 * **Assumptions:** The historical metrics (like `past_defects`, `test_coverage`, and `static_analysis_warnings`) remain stable predictors of code quality for future sprints.
 
 ## 4. Schedule and Milestones
-The project is expected to start on 2026.03.01 and reach completion by 2026.06.30. The tentative milestone schedule is as follows:
+The project is expected to start on 2026.02.23 and reach completion by 2026.03.31. The tentative milestone schedule is as follows:
 
 * **Project kickoff & scope definition:** February 23, 2026 to February 24, 2026.
 * **Data acquisition & data understanding:** February 25, 2026 to February 28, 2026.
