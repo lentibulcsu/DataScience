@@ -1,25 +1,36 @@
-# Machine Learning for Non-Defective Code Identification
+# Machine Learning for Non-Defective Software Module Identification
 
 ## 1. Project Overview & Business Case
-The purpose of the project is to develop a machine-learning model to improve software quality. Defects within the software prevent a business from operating at the most efficient level. Businesses face high costs of software defects, limited testing resources, complex code that increases risk, as well as security vulnerabilities and performance problems. 
+The purpose of the project is to develop a machine-learning model to identify non-defective (clean) software modules and improve software quality. Businesses face high costs from software defects, limited testing resources, complex code that increases risk, as well as security vulnerabilities and performance problems.
 
-By using historical data on software detection, an AI machine-learning model can predict bugs, costs, and risks more efficiently. This approach will allocate testing resources more efficiently and help reduce debugging costs. Identifying defect-prone modules early allows teams to prioritize testing efforts and improve overall software quality before deployment. 
+Traditional approaches focus on detecting defects after they occur. This project takes a proactive stance by identifying characteristics of clean, high-quality code modules that are least likely to contain defects. By using historical data on software metrics, an AI machine-learning model can predict which modules demonstrate hallmarks of quality code—such as low cyclomatic complexity, high test coverage, minimal past defects, and few static analysis warnings.
+
+This approach enables organizations to:
+- **Benchmark Quality Standards**: Understand what distinguishes clean code from defective code, establishing data-driven quality benchmarks
+- **Optimize Resource Allocation**: Focus intensive QA efforts on higher-risk modules while streamlining reviews for predicted non-defective modules
+- **Reward Best Practices**: Identify and replicate patterns from clean code modules across development teams
+- **Reduce False Alarms**: Rather than flagging everything for review, confidently identify modules that meet quality thresholds
+
+The model addresses the extreme class imbalance (only ~3% of modules are non-defective) by learning the rare patterns that characterize truly clean code, enabling teams to prioritize testing efforts and reduce overall debugging costs before deployment. 
 
 ## 2. Project Scope & Deliverables
-The project utilizes the existing dataset of 60k historical software module records. 
-* **In Scope:** Exploratory Data Analysis (EDA) to understand the drivers of clean code (for example, high `test_coverage`, or low `past_defects`).
-* **In Scope:** Training and evaluating models with a focus on optimizing for the minority class.
+The project utilizes the existing dataset of 60k historical software module records with an extreme class imbalance (1,777 non-defective vs. 58,223 defective modules, representing only ~3% clean code).
+* **In Scope:** Exploratory Data Analysis (EDA) to understand the characteristics that distinguish non-defective code modules (for example, high `test_coverage`, low `cyclomatic_complexity`, minimal `past_defects`, and few `static_analysis_warnings`).
+* **In Scope:** Training and evaluating models with a focus on accurately identifying the minority class (non-defective modules) using techniques such as SMOTE for class balancing.
+* **In Scope:** Feature importance analysis to identify the most predictive attributes of clean, high-quality code.
 * **Out of Scope:** Automated patching or rewriting of the defective code.
 * **Out of Scope:** Real-time integration into the CI/CD pipeline.
 
 **Expected Deliverables:**
-* Data Profiling & EDA Report.
-* Baseline Model.
-* Refined Machine Learning Models (Random Forest, XGBoost, Support Vector Machines) optimized for the minority class.
+* Data Profiling & EDA Report identifying key characteristics of non-defective software modules.
+* Baseline Model for non-defective code identification.
+* Refined Machine Learning Models (Random Forest, XGBoost, Support Vector Machines) optimized for accurately identifying the minority class (non-defective modules).
+* Feature importance analysis highlighting the strongest predictors of clean code quality.
 
 ## 3. Risks, Constraints, and Assumptions
-* **Risks:** The extreme class imbalance (approx. 97% defective vs. 3% clean) makes it difficult for a model to learn the minority class. 
-* **Risks:** High False Positives: If the model incorrectly predicts a defective module as "clean," bugs will be pushed to production.
+* **Risks:** The extreme class imbalance (approx. 97% defective vs. 3% non-defective) makes it challenging for models to learn the rare patterns that characterize clean code.
+* **Risks:** High False Negatives: If the model fails to identify a truly non-defective module (predicting it as defective), the team may waste QA resources on unnecessary deep reviews of already-clean code.
+* **Risks:** High False Positives: If the model incorrectly predicts a defective module as "non-defective," bugs will be pushed to production with reduced scrutiny.
 * **Constraints:** The project is constrained to using only the 23 existing historical features/columns available in the current dataset.
 * **Assumptions:** The historical metrics (like `past_defects`, `test_coverage`, and `static_analysis_warnings`) remain stable predictors of code quality for future sprints.
 
