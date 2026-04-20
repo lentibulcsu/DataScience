@@ -30,6 +30,10 @@ wheels/
 # Uploads folder
 uploads/*.csv
 
+# Saved models and predictions (generated files)
+saved_models/*.joblib
+predictions/*.csv
+
 # IDEs
 .vscode/
 .idea/
