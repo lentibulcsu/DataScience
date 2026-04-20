@@ -1,16 +1,16 @@
 """
 Machine Learning pipeline for software defect prediction.
-Trains multiple models and returns evaluation metrics.
+XGBoost-only implementation with model persistence.
 """
 
 import pandas as pd
 import numpy as np
+from pathlib import Path
+from datetime import datetime
+import joblib
 from sklearn.utils import shuffle
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC, LinearSVC
-from sklearn.calibration import CalibratedClassifierCV
 from xgboost import XGBClassifier
 from sklearn.metrics import (
     confusion_matrix,
@@ -20,8 +20,12 @@ from sklearn.metrics import (
     f1_score
 )
 
+# Model storage directory
+MODELS_DIR = Path(__file__).resolve().parent.parent / "saved_models"
+MODELS_DIR.mkdir(exist_ok=True)
 
-def prepare_data(df: pd.DataFrame):
+
+def prepare_training_data(df: pd.DataFrame):
     """
     Prepare training and test datasets with SMOTE oversampling.
 
@@ -35,8 +39,8 @@ def prepare_data(df: pd.DataFrame):
     y = df['defect']
 
     # Create stratified test set (600 samples from each class)
-    test_idx = y[y == 0].sample(600, random_state=42).index.append(
-                y[y == 1].sample(600, random_state=42).index
+    test_idx = y[y == 0].sample(min(600, (y == 0).sum()), random_state=42).index.union(
+                y[y == 1].sample(min(600, (y == 1).sum()), random_state=42).index
                )
 
     train_idx = y.index.difference(test_idx)
@@ -55,24 +59,23 @@ def prepare_data(df: pd.DataFrame):
     return X_train_sm, y_train_sm, X_test, y_test
 
 
-def train_random_forest(X_train, y_train, X_test, y_test):
-    """Train and evaluate Random Forest classifier."""
-    model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
-    model.fit(X_train, y_train)
-    predictions = model.predict(X_test)
+def train_xgboost_model(csv_path: str):
+    """
+    Train XGBoost model and save it.
 
-    return {
-        'model_name': 'Random Forest',
-        'accuracy': accuracy_score(y_test, predictions),
-        'precision': precision_score(y_test, predictions),
-        'recall': recall_score(y_test, predictions),
-        'f1_score': f1_score(y_test, predictions),
-        'confusion_matrix': confusion_matrix(y_test, predictions).tolist()
-    }
+    Args:
+        csv_path: Path to the CSV file with labeled data
 
+    Returns:
+        Dictionary with training results and model path
+    """
+    # Load data
+    df = pd.read_csv(csv_path)
 
-def train_xgboost(X_train, y_train, X_test, y_test):
-    """Train and evaluate XGBoost classifier."""
+    # Prepare data
+    X_train, y_train, X_test, y_test = prepare_training_data(df)
+
+    # Train XGBoost
     model = XGBClassifier(
         n_estimators=100,
         max_depth=6,
@@ -82,155 +85,129 @@ def train_xgboost(X_train, y_train, X_test, y_test):
         n_jobs=-1
     )
     model.fit(X_train, y_train)
+
+    # Evaluate
     predictions = model.predict(X_test)
+
+    # Save model with timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    model_filename = f"xgboost_model_{timestamp}.joblib"
+    model_path = MODELS_DIR / model_filename
+
+    joblib.dump(model, model_path)
 
     return {
         'model_name': 'XGBoost',
-        'accuracy': accuracy_score(y_test, predictions),
-        'precision': precision_score(y_test, predictions),
-        'recall': recall_score(y_test, predictions),
-        'f1_score': f1_score(y_test, predictions),
-        'confusion_matrix': confusion_matrix(y_test, predictions).tolist()
-    }
-
-
-def train_svm_linear(X_train, y_train, X_test, y_test):
-    """Train and evaluate SVM with linear kernel using fast LinearSVC."""
-    # Use subset for faster training (10k samples for web responsiveness)
-    from sklearn.utils import resample
-    if len(X_train) > 10000:
-        X_train_subset, y_train_subset = resample(
-            X_train, y_train,
-            n_samples=10000,
-            random_state=42,
-            stratify=y_train
-        )
-    else:
-        X_train_subset, y_train_subset = X_train, y_train
-
-    # Scale data for better SVM performance
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train_subset)
-    X_test_scaled = scaler.transform(X_test)
-
-    # Use LinearSVC which is much faster than SVC(kernel='linear')
-    model = LinearSVC(random_state=42, max_iter=2000, dual='auto')
-    # Wrap with CalibratedClassifierCV for probability estimates
-    model = CalibratedClassifierCV(model, cv=3)
-    model.fit(X_train_scaled, y_train_subset)
-    predictions = model.predict(X_test_scaled)
-
-    return {
-        'model_name': 'SVM (Linear)',
-        'accuracy': accuracy_score(y_test, predictions),
-        'precision': precision_score(y_test, predictions),
-        'recall': recall_score(y_test, predictions),
-        'f1_score': f1_score(y_test, predictions),
-        'confusion_matrix': confusion_matrix(y_test, predictions).tolist()
-    }
-
-
-def train_svm_rbf(X_train, y_train, X_test, y_test):
-    """Train and evaluate SVM with RBF kernel."""
-    # Use smaller subset for RBF (slower than linear)
-    from sklearn.utils import resample
-    if len(X_train) > 5000:
-        X_train_subset, y_train_subset = resample(
-            X_train, y_train,
-            n_samples=5000,
-            random_state=42,
-            stratify=y_train
-        )
-    else:
-        X_train_subset, y_train_subset = X_train, y_train
-
-    # Scale data for better SVM performance
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train_subset)
-    X_test_scaled = scaler.transform(X_test)
-
-    model = SVC(kernel="rbf", probability=True, random_state=42, max_iter=2000, cache_size=500)
-    model.fit(X_train_scaled, y_train_subset)
-    predictions = model.predict(X_test_scaled)
-
-    return {
-        'model_name': 'SVM (RBF)',
-        'accuracy': accuracy_score(y_test, predictions),
-        'precision': precision_score(y_test, predictions),
-        'recall': recall_score(y_test, predictions),
-        'f1_score': f1_score(y_test, predictions),
-        'confusion_matrix': confusion_matrix(y_test, predictions).tolist()
-    }
-
-
-def train_svm_sigmoid(X_train, y_train, X_test, y_test):
-    """Train and evaluate SVM with sigmoid kernel."""
-    # Use smaller subset for sigmoid (slower than linear)
-    from sklearn.utils import resample
-    if len(X_train) > 5000:
-        X_train_subset, y_train_subset = resample(
-            X_train, y_train,
-            n_samples=5000,
-            random_state=42,
-            stratify=y_train
-        )
-    else:
-        X_train_subset, y_train_subset = X_train, y_train
-
-    # Scale data for better SVM performance
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train_subset)
-    X_test_scaled = scaler.transform(X_test)
-
-    model = SVC(kernel="sigmoid", probability=True, random_state=42, max_iter=2000, cache_size=500)
-    model.fit(X_train_scaled, y_train_subset)
-    predictions = model.predict(X_test_scaled)
-
-    return {
-        'model_name': 'SVM (Sigmoid)',
-        'accuracy': accuracy_score(y_test, predictions),
-        'precision': precision_score(y_test, predictions),
-        'recall': recall_score(y_test, predictions),
-        'f1_score': f1_score(y_test, predictions),
-        'confusion_matrix': confusion_matrix(y_test, predictions).tolist()
-    }
-
-
-def train_all_models(csv_path: str):
-    """
-    Train all models and return results.
-
-    Args:
-        csv_path: Path to the CSV file
-
-    Returns:
-        Dictionary with results for all models
-    """
-    # Load data
-    df = pd.read_csv(csv_path)
-
-    # Prepare data
-    X_train_sm, y_train_sm, X_test, y_test = prepare_data(df)
-
-    # Train all models
-    results = []
-    results.append(train_random_forest(X_train_sm, y_train_sm, X_test, y_test))
-    results.append(train_xgboost(X_train_sm, y_train_sm, X_test, y_test))
-    results.append(train_svm_linear(X_train_sm, y_train_sm, X_test, y_test))
-    results.append(train_svm_rbf(X_train_sm, y_train_sm, X_test, y_test))
-    results.append(train_svm_sigmoid(X_train_sm, y_train_sm, X_test, y_test))
-
-    # Find best model
-    best_model = max(results, key=lambda x: x['accuracy'])
-
-    return {
-        'models': results,
-        'best_model': best_model['model_name'],
+        'model_path': str(model_path),
+        'model_filename': model_filename,
+        'timestamp': timestamp,
+        'accuracy': float(accuracy_score(y_test, predictions)),
+        'precision': float(precision_score(y_test, predictions)),
+        'recall': float(recall_score(y_test, predictions)),
+        'f1_score': float(f1_score(y_test, predictions)),
+        'confusion_matrix': confusion_matrix(y_test, predictions).tolist(),
         'dataset_info': {
             'total_samples': len(df),
-            'train_samples': len(X_train_sm),
+            'train_samples': len(X_train),
             'test_samples': len(X_test),
             'defective_in_test': int((y_test == 1).sum()),
             'non_defective_in_test': int((y_test == 0).sum())
         }
+    }
+
+
+def load_model(model_path: str):
+    """
+    Load a saved model.
+
+    Args:
+        model_path: Path to the saved model file
+
+    Returns:
+        Loaded XGBoost model
+    """
+    return joblib.load(model_path)
+
+
+def get_available_models():
+    """
+    Get list of all saved models.
+
+    Returns:
+        List of dictionaries with model info
+    """
+    models = []
+    for model_file in MODELS_DIR.glob("xgboost_model_*.joblib"):
+        # Extract timestamp from filename
+        timestamp_str = model_file.stem.replace("xgboost_model_", "")
+        try:
+            timestamp = datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
+            models.append({
+                'filename': model_file.name,
+                'path': str(model_file),
+                'timestamp': timestamp_str,
+                'created': timestamp.strftime("%Y-%m-%d %H:%M:%S")
+            })
+        except ValueError:
+            continue
+
+    # Sort by timestamp (newest first)
+    models.sort(key=lambda x: x['timestamp'], reverse=True)
+    return models
+
+
+def predict_with_model(model_path: str, csv_path: str, output_path: str = None):
+    """
+    Make predictions on unlabeled data using a saved model.
+
+    Args:
+        model_path: Path to the saved model
+        csv_path: Path to CSV file with unlabeled data (no 'defect' column)
+        output_path: Optional path to save predictions CSV
+
+    Returns:
+        Dictionary with predictions and statistics
+    """
+    # Load model
+    model = load_model(model_path)
+
+    # Load data
+    df = pd.read_csv(csv_path)
+
+    # Check if 'defect' column exists and remove it if present
+    has_labels = 'defect' in df.columns
+    if has_labels:
+        df = df.drop(columns=['defect'])
+
+    # Make predictions
+    predictions = model.predict(df)
+    prediction_proba = model.predict_proba(df)
+
+    # Create results dataframe
+    results_df = df.copy()
+    results_df['predicted_defect'] = predictions
+    results_df['defect_probability'] = prediction_proba[:, 1]
+    results_df['non_defect_probability'] = prediction_proba[:, 0]
+
+    # Save to CSV if output path provided
+    if output_path is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_path = MODELS_DIR.parent / "predictions" / f"predictions_{timestamp}.csv"
+        output_path.parent.mkdir(exist_ok=True)
+
+    results_df.to_csv(output_path, index=False)
+
+    # Calculate statistics
+    num_defective = int((predictions == 1).sum())
+    num_non_defective = int((predictions == 0).sum())
+
+    return {
+        'total_samples': len(predictions),
+        'predicted_defective': num_defective,
+        'predicted_non_defective': num_non_defective,
+        'defect_rate': float(num_defective / len(predictions) * 100),
+        'predictions': predictions.tolist(),
+        'probabilities': prediction_proba.tolist(),
+        'output_file': str(output_path),
+        'output_filename': Path(output_path).name
     }
