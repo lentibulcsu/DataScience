@@ -20,15 +20,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 UPLOAD_DIR = BASE_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-# Mount static files and templates
-app.mount("/static", StaticFiles(directory=str(BASE_DIR / "app" / "static")), name="static")
+# Set up templates
 templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
+
+# Mount static files (create directory if it doesn't exist)
+static_dir = BASE_DIR / "app" / "static"
+static_dir.mkdir(exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """Render the home page with file upload form."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request, name="index.html"
+    )
 
 
 @app.post("/upload")
