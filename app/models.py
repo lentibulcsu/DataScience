@@ -47,8 +47,7 @@ def train_xgboost_model(csv_path: str):
         max_depth=6,
         learning_rate=0.1,
         random_state=42,
-        eval_metric="logloss",
-        n_jobs=-1
+        eval_metric="logloss"
     )
     model.fit(X, y)
 
