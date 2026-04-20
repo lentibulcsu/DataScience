@@ -19,11 +19,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project files
 COPY . .
 
-# Expose Jupyter notebook port
-EXPOSE 8888
+# Expose ports (8000 for FastAPI, 8888 for Jupyter)
+EXPOSE 8000 8888
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 
-# Run Jupyter notebook
-CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
+# Default command runs the FastAPI web app
+# To run Jupyter instead, override with: docker run -p 8888:8888 <image> jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
