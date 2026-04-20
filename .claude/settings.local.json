@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(curl:*)",
+      "Bash(kill:*)",
+      "Bash(cd:*)",
+      "Bash(sleep:*)",
+      "Bash(time curl:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(git fetch:*)"
+    ]
+  }
+}

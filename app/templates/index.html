@@ -299,8 +299,8 @@
                 <tbody id="tableBody"></tbody>
             </table>
 
-            <h3 style="margin-bottom: 20px; color: #333;">🎯 Confusion Matrices</h3>
-            <div class="confusion-matrix" id="confusionMatrices"></div>
+            <h3 style="margin-bottom: 20px; color: #333;">🎯 Confusion Matrix</h3>
+            <div class="confusion-matrix" id="confusionMatrix"></div>
 
             <button class="reset-btn" onclick="resetApp()">Upload Another File</button>
         </div>
@@ -420,8 +420,8 @@
                 tableBody.appendChild(row);
             });
 
-            // Display confusion matrices
-            const cmContainer = document.getElementById('confusionMatrices');
+            // Display confusion matrix
+            const cmContainer = document.getElementById('confusionMatrix');
             cmContainer.innerHTML = '';
             data.models.forEach(model => {
                 const cm = model.confusion_matrix;
