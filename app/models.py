@@ -8,9 +8,7 @@ import numpy as np
 from pathlib import Path
 from datetime import datetime
 import joblib
-from sklearn.utils import shuffle
-from sklearn.preprocessing import StandardScaler
-from imblearn.over_sampling import SMOTE
+from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 from sklearn.metrics import (
     confusion_matrix,
@@ -25,43 +23,10 @@ MODELS_DIR = Path(__file__).resolve().parent.parent / "saved_models"
 MODELS_DIR.mkdir(exist_ok=True)
 
 
-def prepare_training_data(df: pd.DataFrame):
-    """
-    Prepare training and test datasets with SMOTE oversampling.
-
-    Args:
-        df: Input dataframe with features and 'defect' target column
-
-    Returns:
-        Tuple of (X_train_sm, y_train_sm, X_test, y_test)
-    """
-    X = df.drop(columns=['defect'])
-    y = df['defect']
-
-    # Create stratified test set (600 samples from each class)
-    test_idx = y[y == 0].sample(min(600, (y == 0).sum()), random_state=42).index.union(
-                y[y == 1].sample(min(600, (y == 1).sum()), random_state=42).index
-               )
-
-    train_idx = y.index.difference(test_idx)
-
-    X_train, y_train = X.loc[train_idx], y.loc[train_idx]
-    X_test, y_test = X.loc[test_idx], y.loc[test_idx]
-
-    # Shuffle datasets
-    X_train, y_train = shuffle(X_train, y_train, random_state=42)
-    X_test, y_test = shuffle(X_test, y_test, random_state=42)
-
-    # Apply SMOTE to balance training data
-    smote = SMOTE(sampling_strategy='minority', random_state=42)
-    X_train_sm, y_train_sm = smote.fit_resample(X_train, y_train)
-
-    return X_train_sm, y_train_sm, X_test, y_test
-
-
 def train_xgboost_model(csv_path: str):
     """
     Train XGBoost model and save it.
+    Uses the data as-is without any modifications or balancing.
 
     Args:
         csv_path: Path to the CSV file with labeled data
@@ -72,8 +37,14 @@ def train_xgboost_model(csv_path: str):
     # Load data
     df = pd.read_csv(csv_path)
 
-    # Prepare data
-    X_train, y_train, X_test, y_test = prepare_training_data(df)
+    # Separate features and target
+    X = df.drop(columns=['defect'])
+    y = df['defect']
+
+    # Split into train and test (80/20 split)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
 
     # Train XGBoost
     model = XGBClassifier(
@@ -110,6 +81,8 @@ def train_xgboost_model(csv_path: str):
             'total_samples': len(df),
             'train_samples': len(X_train),
             'test_samples': len(X_test),
+            'defective_in_train': int((y_train == 1).sum()),
+            'non_defective_in_train': int((y_train == 0).sum()),
             'defective_in_test': int((y_test == 1).sum()),
             'non_defective_in_test': int((y_test == 0).sum())
         }
