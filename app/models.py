@@ -67,8 +67,7 @@ def train_random_forest(X_train, y_train, X_test, y_test):
         'precision': precision_score(y_test, predictions),
         'recall': recall_score(y_test, predictions),
         'f1_score': f1_score(y_test, predictions),
-        'confusion_matrix': confusion_matrix(y_test, predictions).tolist(),
-        'predictions': predictions
+        'confusion_matrix': confusion_matrix(y_test, predictions).tolist()
     }
 
 
@@ -91,8 +90,7 @@ def train_xgboost(X_train, y_train, X_test, y_test):
         'precision': precision_score(y_test, predictions),
         'recall': recall_score(y_test, predictions),
         'f1_score': f1_score(y_test, predictions),
-        'confusion_matrix': confusion_matrix(y_test, predictions).tolist(),
-        'predictions': predictions
+        'confusion_matrix': confusion_matrix(y_test, predictions).tolist()
     }
 
 
@@ -128,8 +126,7 @@ def train_svm_linear(X_train, y_train, X_test, y_test):
         'precision': precision_score(y_test, predictions),
         'recall': recall_score(y_test, predictions),
         'f1_score': f1_score(y_test, predictions),
-        'confusion_matrix': confusion_matrix(y_test, predictions).tolist(),
-        'predictions': predictions
+        'confusion_matrix': confusion_matrix(y_test, predictions).tolist()
     }
 
 
@@ -162,8 +159,7 @@ def train_svm_rbf(X_train, y_train, X_test, y_test):
         'precision': precision_score(y_test, predictions),
         'recall': recall_score(y_test, predictions),
         'f1_score': f1_score(y_test, predictions),
-        'confusion_matrix': confusion_matrix(y_test, predictions).tolist(),
-        'predictions': predictions
+        'confusion_matrix': confusion_matrix(y_test, predictions).tolist()
     }
 
 
@@ -196,8 +192,7 @@ def train_svm_sigmoid(X_train, y_train, X_test, y_test):
         'precision': precision_score(y_test, predictions),
         'recall': recall_score(y_test, predictions),
         'f1_score': f1_score(y_test, predictions),
-        'confusion_matrix': confusion_matrix(y_test, predictions).tolist(),
-        'predictions': predictions
+        'confusion_matrix': confusion_matrix(y_test, predictions).tolist()
     }
 
 
