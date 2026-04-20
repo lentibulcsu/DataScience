@@ -6,9 +6,11 @@ Trains multiple models and returns evaluation metrics.
 import pandas as pd
 import numpy as np
 from sklearn.utils import shuffle
+from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
+from sklearn.svm import SVC, LinearSVC
+from sklearn.calibration import CalibratedClassifierCV
 from xgboost import XGBClassifier
 from sklearn.metrics import (
     confusion_matrix,
@@ -95,22 +97,30 @@ def train_xgboost(X_train, y_train, X_test, y_test):
 
 
 def train_svm_linear(X_train, y_train, X_test, y_test):
-    """Train and evaluate SVM with linear kernel."""
-    # Use subset for faster training (SVMs are slow on large datasets)
+    """Train and evaluate SVM with linear kernel using fast LinearSVC."""
+    # Use subset for faster training (10k samples for web responsiveness)
     from sklearn.utils import resample
-    if len(X_train) > 20000:
+    if len(X_train) > 10000:
         X_train_subset, y_train_subset = resample(
             X_train, y_train,
-            n_samples=20000,
+            n_samples=10000,
             random_state=42,
             stratify=y_train
         )
     else:
         X_train_subset, y_train_subset = X_train, y_train
 
-    model = SVC(kernel="linear", probability=True, random_state=42, max_iter=5000, cache_size=500)
-    model.fit(X_train_subset, y_train_subset)
-    predictions = model.predict(X_test)
+    # Scale data for better SVM performance
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train_subset)
+    X_test_scaled = scaler.transform(X_test)
+
+    # Use LinearSVC which is much faster than SVC(kernel='linear')
+    model = LinearSVC(random_state=42, max_iter=2000, dual='auto')
+    # Wrap with CalibratedClassifierCV for probability estimates
+    model = CalibratedClassifierCV(model, cv=3)
+    model.fit(X_train_scaled, y_train_subset)
+    predictions = model.predict(X_test_scaled)
 
     return {
         'model_name': 'SVM (Linear)',
@@ -125,21 +135,26 @@ def train_svm_linear(X_train, y_train, X_test, y_test):
 
 def train_svm_rbf(X_train, y_train, X_test, y_test):
     """Train and evaluate SVM with RBF kernel."""
-    # Use subset for faster training
+    # Use smaller subset for RBF (slower than linear)
     from sklearn.utils import resample
-    if len(X_train) > 20000:
+    if len(X_train) > 5000:
         X_train_subset, y_train_subset = resample(
             X_train, y_train,
-            n_samples=20000,
+            n_samples=5000,
             random_state=42,
             stratify=y_train
         )
     else:
         X_train_subset, y_train_subset = X_train, y_train
 
-    model = SVC(kernel="rbf", probability=True, random_state=42, max_iter=5000, cache_size=500)
-    model.fit(X_train_subset, y_train_subset)
-    predictions = model.predict(X_test)
+    # Scale data for better SVM performance
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train_subset)
+    X_test_scaled = scaler.transform(X_test)
+
+    model = SVC(kernel="rbf", probability=True, random_state=42, max_iter=2000, cache_size=500)
+    model.fit(X_train_scaled, y_train_subset)
+    predictions = model.predict(X_test_scaled)
 
     return {
         'model_name': 'SVM (RBF)',
@@ -154,21 +169,26 @@ def train_svm_rbf(X_train, y_train, X_test, y_test):
 
 def train_svm_sigmoid(X_train, y_train, X_test, y_test):
     """Train and evaluate SVM with sigmoid kernel."""
-    # Use subset for faster training
+    # Use smaller subset for sigmoid (slower than linear)
     from sklearn.utils import resample
-    if len(X_train) > 20000:
+    if len(X_train) > 5000:
         X_train_subset, y_train_subset = resample(
             X_train, y_train,
-            n_samples=20000,
+            n_samples=5000,
             random_state=42,
             stratify=y_train
         )
     else:
         X_train_subset, y_train_subset = X_train, y_train
 
-    model = SVC(kernel="sigmoid", probability=True, random_state=42, max_iter=5000, cache_size=500)
-    model.fit(X_train_subset, y_train_subset)
-    predictions = model.predict(X_test)
+    # Scale data for better SVM performance
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train_subset)
+    X_test_scaled = scaler.transform(X_test)
+
+    model = SVC(kernel="sigmoid", probability=True, random_state=42, max_iter=2000, cache_size=500)
+    model.fit(X_train_scaled, y_train_subset)
+    predictions = model.predict(X_test_scaled)
 
     return {
         'model_name': 'SVM (Sigmoid)',
