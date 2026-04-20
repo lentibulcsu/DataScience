@@ -55,7 +55,7 @@ def prepare_data(df: pd.DataFrame):
 
 def train_random_forest(X_train, y_train, X_test, y_test):
     """Train and evaluate Random Forest classifier."""
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
     model.fit(X_train, y_train)
     predictions = model.predict(X_test)
 
@@ -77,7 +77,8 @@ def train_xgboost(X_train, y_train, X_test, y_test):
         max_depth=6,
         learning_rate=0.1,
         random_state=42,
-        eval_metric="logloss"
+        eval_metric="logloss",
+        n_jobs=-1
     )
     model.fit(X_train, y_train)
     predictions = model.predict(X_test)
@@ -95,8 +96,20 @@ def train_xgboost(X_train, y_train, X_test, y_test):
 
 def train_svm_linear(X_train, y_train, X_test, y_test):
     """Train and evaluate SVM with linear kernel."""
-    model = SVC(kernel="linear", probability=True, random_state=42, max_iter=1000)
-    model.fit(X_train, y_train)
+    # Use subset for faster training (SVMs are slow on large datasets)
+    from sklearn.utils import resample
+    if len(X_train) > 20000:
+        X_train_subset, y_train_subset = resample(
+            X_train, y_train,
+            n_samples=20000,
+            random_state=42,
+            stratify=y_train
+        )
+    else:
+        X_train_subset, y_train_subset = X_train, y_train
+
+    model = SVC(kernel="linear", probability=True, random_state=42, max_iter=5000, cache_size=500)
+    model.fit(X_train_subset, y_train_subset)
     predictions = model.predict(X_test)
 
     return {
@@ -112,8 +125,20 @@ def train_svm_linear(X_train, y_train, X_test, y_test):
 
 def train_svm_rbf(X_train, y_train, X_test, y_test):
     """Train and evaluate SVM with RBF kernel."""
-    model = SVC(kernel="rbf", probability=True, random_state=42, max_iter=1000)
-    model.fit(X_train, y_train)
+    # Use subset for faster training
+    from sklearn.utils import resample
+    if len(X_train) > 20000:
+        X_train_subset, y_train_subset = resample(
+            X_train, y_train,
+            n_samples=20000,
+            random_state=42,
+            stratify=y_train
+        )
+    else:
+        X_train_subset, y_train_subset = X_train, y_train
+
+    model = SVC(kernel="rbf", probability=True, random_state=42, max_iter=5000, cache_size=500)
+    model.fit(X_train_subset, y_train_subset)
     predictions = model.predict(X_test)
 
     return {
@@ -129,8 +154,20 @@ def train_svm_rbf(X_train, y_train, X_test, y_test):
 
 def train_svm_sigmoid(X_train, y_train, X_test, y_test):
     """Train and evaluate SVM with sigmoid kernel."""
-    model = SVC(kernel="sigmoid", probability=True, random_state=42, max_iter=1000)
-    model.fit(X_train, y_train)
+    # Use subset for faster training
+    from sklearn.utils import resample
+    if len(X_train) > 20000:
+        X_train_subset, y_train_subset = resample(
+            X_train, y_train,
+            n_samples=20000,
+            random_state=42,
+            stratify=y_train
+        )
+    else:
+        X_train_subset, y_train_subset = X_train, y_train
+
+    model = SVC(kernel="sigmoid", probability=True, random_state=42, max_iter=5000, cache_size=500)
+    model.fit(X_train_subset, y_train_subset)
     predictions = model.predict(X_test)
 
     return {
