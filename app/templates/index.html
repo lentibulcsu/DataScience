@@ -246,49 +246,21 @@
                 ✅ Model Trained Successfully!
             </div>
 
-            <h3 style="color: #333; margin: 20px 0;">Model Performance</h3>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+            <h3 style="color: #333; margin: 20px 0;">Training Dataset Summary</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
                 <div class="metric-card">
-                    <div class="metric-label">Accuracy</div>
-                    <div class="metric-value" id="trainAccuracy">-</div>
+                    <div class="metric-label">Total Samples</div>
+                    <div class="metric-value" id="totalSamplesTrain">-</div>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-label">F1-Score</div>
-                    <div class="metric-value" id="trainF1">-</div>
+                <div class="metric-card" style="background: #fff0f0;">
+                    <div class="metric-label">Defective</div>
+                    <div class="metric-value" style="color: #c33;" id="defectiveTrain">-</div>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-label">Precision</div>
-                    <div class="metric-value" id="trainPrecision">-</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Recall</div>
-                    <div class="metric-value" id="trainRecall">-</div>
+                <div class="metric-card" style="background: #f0fff0;">
+                    <div class="metric-label">Clean</div>
+                    <div class="metric-value" style="color: #2a9d2a;" id="cleanTrain">-</div>
                 </div>
             </div>
-
-            <h3 style="color: #333; margin: 20px 0;">Confusion Matrix</h3>
-            <table>
-                <tr>
-                    <th>Metric</th>
-                    <th>Value</th>
-                </tr>
-                <tr>
-                    <td>True Negatives (Correct Clean)</td>
-                    <td id="tn">-</td>
-                </tr>
-                <tr>
-                    <td>False Positives (Predicted Defect, Actually Clean)</td>
-                    <td id="fp">-</td>
-                </tr>
-                <tr>
-                    <td>False Negatives (Predicted Clean, Actually Defect)</td>
-                    <td id="fn">-</td>
-                </tr>
-                <tr>
-                    <td>True Positives (Correct Defect)</td>
-                    <td id="tp">-</td>
-                </tr>
-            </table>
 
             <div class="info-box" id="modelInfo"></div>
 
@@ -457,20 +429,15 @@
         }
 
         function displayTrainResults(data) {
-            document.getElementById('trainAccuracy').textContent = (data.accuracy * 100).toFixed(2) + '%';
-            document.getElementById('trainF1').textContent = (data.f1_score * 100).toFixed(2) + '%';
-            document.getElementById('trainPrecision').textContent = (data.precision * 100).toFixed(2) + '%';
-            document.getElementById('trainRecall').textContent = (data.recall * 100).toFixed(2) + '%';
-
-            const cm = data.confusion_matrix;
-            document.getElementById('tn').textContent = cm[0][0];
-            document.getElementById('fp').textContent = cm[0][1];
-            document.getElementById('fn').textContent = cm[1][0];
-            document.getElementById('tp').textContent = cm[1][1];
+            document.getElementById('totalSamplesTrain').textContent = data.dataset_info.total_samples;
+            document.getElementById('defectiveTrain').textContent = data.dataset_info.defective;
+            document.getElementById('cleanTrain').textContent = data.dataset_info.non_defective;
 
             document.getElementById('modelInfo').innerHTML = `
                 <strong>Model Saved:</strong> ${data.model_filename}<br>
                 <strong>Trained on:</strong> ${data.dataset_info.total_samples} samples
+                (${data.dataset_info.defect_rate.toFixed(2)}% defect rate)<br>
+                <strong>Note:</strong> Model validation was performed in Jupyter notebook
             `;
 
             currentModelFilename = data.model_filename;

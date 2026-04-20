@@ -25,8 +25,8 @@ MODELS_DIR.mkdir(exist_ok=True)
 
 def train_xgboost_model(csv_path: str):
     """
-    Train XGBoost model and save it.
-    Uses the data as-is without any modifications or balancing.
+    Train XGBoost model on entire dataset and save it.
+    No train/test split - uses all data for training.
 
     Args:
         csv_path: Path to the CSV file with labeled data
@@ -41,12 +41,7 @@ def train_xgboost_model(csv_path: str):
     X = df.drop(columns=['defect'])
     y = df['defect']
 
-    # Split into train and test (80/20 split)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
-
-    # Train XGBoost
+    # Train XGBoost on ALL data (no split)
     model = XGBClassifier(
         n_estimators=100,
         max_depth=6,
@@ -55,10 +50,7 @@ def train_xgboost_model(csv_path: str):
         eval_metric="logloss",
         n_jobs=-1
     )
-    model.fit(X_train, y_train)
-
-    # Evaluate
-    predictions = model.predict(X_test)
+    model.fit(X, y)
 
     # Save model with timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -72,19 +64,11 @@ def train_xgboost_model(csv_path: str):
         'model_path': str(model_path),
         'model_filename': model_filename,
         'timestamp': timestamp,
-        'accuracy': float(accuracy_score(y_test, predictions)),
-        'precision': float(precision_score(y_test, predictions)),
-        'recall': float(recall_score(y_test, predictions)),
-        'f1_score': float(f1_score(y_test, predictions)),
-        'confusion_matrix': confusion_matrix(y_test, predictions).tolist(),
         'dataset_info': {
             'total_samples': len(df),
-            'train_samples': len(X_train),
-            'test_samples': len(X_test),
-            'defective_in_train': int((y_train == 1).sum()),
-            'non_defective_in_train': int((y_train == 0).sum()),
-            'defective_in_test': int((y_test == 1).sum()),
-            'non_defective_in_test': int((y_test == 0).sum())
+            'defective': int((y == 1).sum()),
+            'non_defective': int((y == 0).sum()),
+            'defect_rate': float((y == 1).sum() / len(y) * 100)
         }
     }
 
