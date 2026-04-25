@@ -1,5 +1,8 @@
 # Machine Learning for Non-Defective Software Module Identification
 
+## LINK
+Link to the App and Documentation: https://github.com/lentibulcsu/DataScience/blob/poc-web-app/POC_APP_GUIDE.md
+
 ## 0. Dataset
 Dataset: https://www.kaggle.com/datasets/mirzayasirabdullah07/software-defect-prediction-dataset
 
