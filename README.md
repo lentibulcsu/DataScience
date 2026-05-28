@@ -1,5 +1,10 @@
 # Machine Learning for Non-Defective Software Module Identification
 
+## Team Members:
+* **Krissy Krigsman**
+* **Zoltan Szabo**
+* **Bulcsu Lenti**
+
 ## LINK
 Link to the App and Documentation: https://github.com/lentibulcsu/DataScience/blob/poc-web-app/POC_APP_GUIDE.md
 
